@@ -7,8 +7,6 @@
 [Ll]ib64
 [Ll]ocal
 [Ss]cripts
-Pipfile
-Pipfile.lock
 tcl
 pyvenv.cfg
 .venv
