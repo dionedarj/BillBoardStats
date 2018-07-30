@@ -1,5 +1,6 @@
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
+import discogs_client as dc
 import re
 import urllib.request
 import json
@@ -7,8 +8,20 @@ import getpass
 
 
 def list_from_date(date):  
+
+    url = 'https://www.billboard.com/charts/hot-100/' + date
+    request = urllib.request.Request(
+        url,
+        headers = {
+            'User-Agent': 'BillBoardStats/0.1',
+        }
+    )
+    html = urlopen(request).read()
+
+    soup = BeautifulSoup(html, 'html.parser')
+
     #First Song/Artist - needed because Billboard puts their first song/artist in a div class "chart-number-one__title"  and "chart"
- 
+    
     first_song = soup.find('div', {'class': 'chart-number-one__title'}).string.strip()
     first_artist = soup.find('div', {'class': 'chart-number-one__artist'}).find('a', text=True).string.strip()
 
@@ -32,7 +45,8 @@ def list_from_date(date):
 
 if __name__ == '__main__':
     # client = dc.Client('BillBoardStats/0.1')
-    token = getpass.getpass(prompt='What is your user token?')
-    # client = dc.Client('BillBoardStats/0.1', user_token='')
-    results = client.search('Psycho', type='release')
-    print (results[0].artists[0].name)
+    # token = getpass.getpass(prompt='What is your user token?')
+    # client = dc.Client('BillBoardStats/0.1', user_token=token)
+    # results = client.search('Psycho', type='release')
+    # print (results[0].artists[0].name)
+    list_from_date('')
