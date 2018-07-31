@@ -4,11 +4,9 @@ import discogs_client as dc
 import re
 import urllib.request
 import json
-import getpass
 
 
-def list_from_date(date):  
-
+def list_from_date(date):
     url = 'https://www.billboard.com/charts/hot-100/' + date
     request = urllib.request.Request(
         url,
@@ -20,7 +18,8 @@ def list_from_date(date):
 
     soup = BeautifulSoup(html, 'html.parser')
 
-    #First Song/Artist - needed because Billboard puts their first song/artist in a div class "chart-number-one__title"  and "chart"
+    # First Song/Artist - needed because Billboard puts their first song/artist in a div class
+    # "chart-number-one__title"  and "chart-number-one__artist
     
     first_song = soup.find('div', {'class': 'chart-number-one__title'}).string.strip()
     first_artist = soup.find('div', {'class': 'chart-number-one__artist'}).find('a', text=True).string.strip()
@@ -40,13 +39,19 @@ def list_from_date(date):
 
     pairs = list(zip(artists,songs))
  
-    print (pairs)
+    print(pairs)
     return pairs
 
+
+# Gets discogs token from file
+def get_token():
+    with open('token.json') as f:
+        data = json.load(f)
+        return data["token"]
+
+
 if __name__ == '__main__':
-    # client = dc.Client('BillBoardStats/0.1')
-    # token = getpass.getpass(prompt='What is your user token?')
-    # client = dc.Client('BillBoardStats/0.1', user_token=token)
-    # results = client.search('Psycho', type='release')
-    # print (results[0].artists[0].name)
+    client = dc.Client('BillBoardStats/0.1', user_token=get_token())
+    results = client.search('Psycho Post Malone', type='release')
+    print(results[0].artists[0].name)
     list_from_date('')
