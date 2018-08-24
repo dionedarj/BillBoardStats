@@ -8,6 +8,7 @@ name = "pypi"
 flask = "*"
 oauthlib = "*"
 discogs-client = "*"
+numpy = "*"
 
 [dev-packages]
 pylint = "*"
