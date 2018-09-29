@@ -28,9 +28,17 @@ def list_from_date(date=''):
 
     # First Song/Artist - needed because Billboard puts their first song/artist in a div class
     # "chart-number-one__title"  and "chart-number-one__artist
+    # Sometimes the artist is wrapped in an <a> tag and sometimes not. 
+    # We check for this.
     
     first_song = soup.find('div', {'class': 'chart-number-one__title'}).string.strip()
-    first_artist = soup.find('div', {'class': 'chart-number-one__artist'}).find('a', text=True).string.strip()
+    first_artist = soup.find('div', {'class': 'chart-number-one__artist'}).find('a', text=True)
+    if first_artist is None:
+        first_artist = soup.find('div', {'class': 'chart-number-one__artist'}).string.strip()
+    else:
+        first_artist = first_artist.string.strip()
+
+        
 
     songs = soup.find_all('span', {'class': 'chart-list-item__title-text'})
     artists = soup.find_all(lambda tag: (tag.name == 'div' and tag.get('class') == ['chart-list-item__artist'] and len(list(tag.descendants)) == 1) 
@@ -80,7 +88,7 @@ def list_from_date(date=''):
         #             years.append(result.year)
         #             break
 
-        if restriction_count >= 59:
+        if restriction_count >= 20:
             time.sleep(60)
             restriction_count = 0
 
@@ -107,7 +115,7 @@ def replace_feat(artist_song_string):
     Brute force right now but might fix
     :return: modified string without the aforementioned
     """
-    result = re.sub('\.',          '',  artist_song_string, re.IGNORECASE)
+    result = re.sub(' .',          '',  artist_song_string, re.IGNORECASE)
     result = re.sub(' & ',         ' ', result, re.IGNORECASE)
     result = re.sub(' ft ',        ' ', result, flags=re.IGNORECASE)
     result = re.sub(' featuring ', ' ', result, flags=re.IGNORECASE)
