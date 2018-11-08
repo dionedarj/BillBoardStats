@@ -1,11 +1,21 @@
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import discogs_client as dc
-import urllib.request
+import webbrowser
+import requests
 import json
 import re
 import time
 
+WIKIPEDIA_API_URL = 'https://en.wikipedia.org/w/api.php'
+BILLBOARD_URL = 'https://www.billboard.com/charts/hot-100/'
+USER_AGENT = 'BillBoardStats/0.1'
+SEARCH_PARAMS_TEMPLATE = {
+    'action': 'query',
+    'list': 'search',
+    'srsearch': 'tosearch',
+    'format': 'json'
+}
 
 def list_from_date(date=''):
     """
@@ -14,15 +24,10 @@ def list_from_date(date=''):
     :param date: date to search for billboard top 100 week
     :return: tuple containing (artist, song, year, genre)
     """
-    client = dc.Client('BillBoardStats/0.1 +http://www.ramondioneda.me', user_token=get_token())
-    url = 'https://www.billboard.com/charts/hot-100/' + date
-    request = urllib.request.Request(
-        url,
-        headers={
-            'User-Agent': 'BillBoardStats/0.1',
-        }
-    )
-    html = urlopen(request).read()
+
+    url = BILLBOARD_URL + date
+    request = requests.get(url, headers={ 'User-Agent': USER_AGENT })
+    html = request.text
 
     soup = BeautifulSoup(html, 'html.parser')
 
@@ -52,12 +57,6 @@ def list_from_date(date=''):
 
     pairs = list(zip(artists, songs))
 
-    # print('Number of songs on list: ' + str(len(songs)))
-    # print('Number of artists on list: ' + str(len(artists)))
-
-    # Need a counter because discogs limits 60 requests per minute
-    # After 60 requests we need to sleep for 1 minute
-    restriction_count = 0
     years = []
     for i, pair in enumerate(pairs):
         artist = pair[0]
@@ -70,6 +69,7 @@ def list_from_date(date=''):
         try:
             results = client.search(replace_feat(song_artist), type='release')
             for result in results:
+                print(result)
                 if artist in result.title:
                     years = years + [result.year]
                     found = True
@@ -88,7 +88,8 @@ def list_from_date(date=''):
         #             years.append(result.year)
         #             break
 
-        if restriction_count >= 20:
+        if restriction_count >= 60:
+            print('waiting!')
             time.sleep(60)
             restriction_count = 0
 
@@ -99,14 +100,14 @@ def list_from_date(date=''):
     return pairs
 
 
-def get_token():
+def get_config():
     """
-    Loads json from 'token.json'
+    Loads json from 'config.json'
     :return: token from json file
     """
-    with open('token.json') as f:
-        data = json.load(f)
-        return data["token"]
+    with open('config.json') as f:
+        config = json.load(f)
+        return config
 
 
 def replace_feat(artist_song_string):

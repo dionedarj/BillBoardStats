@@ -9,6 +9,7 @@ flask = "*"
 oauthlib = "*"
 discogs-client = "*"
 numpy = "*"
+requests = "*"
 
 [dev-packages]
 pylint = "*"

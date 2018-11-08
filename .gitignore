@@ -12,5 +12,5 @@ pyvenv.cfg
 .venv
 pip-selfcheck.json
 .vscode
-token.json
+config.json
 .idea
