@@ -6,8 +6,10 @@ import requests
 import json
 import re
 import time
+import numpy as np
 
-WIKIPEDIA_API_URL = 'https://en.wikipedia.org/w/api.php'
+WIKIPEDIA_URL = 'http://en.wikipedia.org/'
+WIKIPEDIA_API_URL = WIKIPEDIA_URL + 'w/api.php'
 BILLBOARD_URL = 'https://www.billboard.com/charts/hot-100/'
 USER_AGENT = 'BillBoardStats/0.1'
 SEARCH_PARAMS_TEMPLATE = {
@@ -58,6 +60,7 @@ def list_from_date(date=''):
     pairs = list(zip(artists, songs))
 
     years = []
+    genres = []
     for i, pair in enumerate(pairs):
         artist = pair[0]
         song = pair[1]
@@ -67,11 +70,12 @@ def list_from_date(date=''):
 
         found = False
         try:
-            results = client.search(replace_feat(song_artist), type='release')
             for result in results:
-                print(result)
-                if artist in result.title:
+                split_artists = re.split('\s*(?:[Ff]eaturing|[Ff]t\.|&|\+)\s*', artist)
+                result_artists = [x.name for x in result.artists]
+                if any(np.in1d(split_artists, result_artists)):
                     years = years + [result.year]
+                    genres = genres + [result.genres]
                     found = True
                     break
 
@@ -93,7 +97,10 @@ def list_from_date(date=''):
             time.sleep(60)
             restriction_count = 0
 
+    print("Years:")
     print(years)
+    print("Genres")
+    print(genres)
     # results = [client.search(pair[0] + ' ' + pair[1], type='release') for pair in pairs]
     # years = [result[0].year for result in results]
 
@@ -116,11 +123,12 @@ def replace_feat(artist_song_string):
     Brute force right now but might fix
     :return: modified string without the aforementioned
     """
-    result = re.sub(' .',          '',  artist_song_string, re.IGNORECASE)
+    result = re.sub('\.',          '',  artist_song_string, re.IGNORECASE)
     result = re.sub(' & ',         ' ', result, re.IGNORECASE)
     result = re.sub(' ft ',        ' ', result, flags=re.IGNORECASE)
     result = re.sub(' featuring ', ' ', result, flags=re.IGNORECASE)
     result = re.sub(' feat ',      ' ', result, flags=re.IGNORECASE)
+    result= re.sub(', ',           ' ', result, flags=re.IGNORECASE)
     return result
 
 
