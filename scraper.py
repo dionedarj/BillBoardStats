@@ -9,13 +9,20 @@ import time
 import numpy as np
 
 WIKIPEDIA_URL = 'http://en.wikipedia.org/'
-WIKIPEDIA_API_URL = WIKIPEDIA_URL + 'w/api.php'
+WIKIPEDIA_API_URL = WIKIPEDIA_URL + 'w/api.php/'
 BILLBOARD_URL = 'https://www.billboard.com/charts/hot-100/'
 USER_AGENT = 'BillBoardStats/0.1'
 SEARCH_PARAMS_TEMPLATE = {
     'action': 'query',
     'list': 'search',
     'srsearch': 'tosearch',
+    'srlimit': 1,
+    'format': 'json'
+}
+PARSE_PARAMS_TEMPLATE = {
+    'action': 'parse',
+    'pageid': 'blankid',
+    'prop': 'sections',
     'format': 'json'
 }
 
@@ -45,8 +52,6 @@ def list_from_date(date=''):
     else:
         first_artist = first_artist.string.strip()
 
-        
-
     songs = soup.find_all('span', {'class': 'chart-list-item__title-text'})
     artists = soup.find_all(lambda tag: (tag.name == 'div' and tag.get('class') == ['chart-list-item__artist'] and len(list(tag.descendants)) == 1) 
                                     or (tag.name == 'a' and tag.parent.name == 'div' and tag.parent.get('class') == ['chart-list-item__artist']))
@@ -64,38 +69,26 @@ def list_from_date(date=''):
     for i, pair in enumerate(pairs):
         artist = pair[0]
         song = pair[1]
-        restriction_count = restriction_count + 1
         song_artist = song + ' ' + artist
         print(song_artist)
 
-        found = False
-        try:
-            for result in results:
-                split_artists = re.split('\s*(?:[Ff]eaturing|[Ff]t\.|&|\+)\s*', artist)
-                result_artists = [x.name for x in result.artists]
-                if any(np.in1d(split_artists, result_artists)):
-                    years = years + [result.year]
-                    genres = genres + [result.genres]
-                    found = True
-                    break
+        search_params = SEARCH_PARAMS_TEMPLATE
+        search_params['srsearch'] = song_artist
 
-            if not found:
-                del pairs[i]
-            found = False
-        except IndexError:
-            pass
+        wiki_page_id_request = requests.get(WIKIPEDIA_API_URL, search_params)
 
-        # results = client.search(replace_feat(song_artist), type='release')
-        # if len(results) != 0:
-        #     for result in results:
-        #         if artist in result.title:
-        #             years.append(result.year)
-        #             break
+        parsed_json = json.loads(wiki_page_id_request.text)
+        page_id = parsed_json['query']['search'][0]['pageid']
 
-        if restriction_count >= 60:
-            print('waiting!')
-            time.sleep(60)
-            restriction_count = 0
+        parse_params = PARSE_PARAMS_TEMPLATE
+        parse_params['pageid'] = page_id
+
+        wiki_parse_request = requests.get(WIKIPEDIA_API_URL, parse_params)
+
+        print(wiki_parse_request.text)
+
+        parsed_json = json.loads(wiki_parse_request.text)
+        
 
     print("Years:")
     print(years)
@@ -128,7 +121,7 @@ def replace_feat(artist_song_string):
     result = re.sub(' ft ',        ' ', result, flags=re.IGNORECASE)
     result = re.sub(' featuring ', ' ', result, flags=re.IGNORECASE)
     result = re.sub(' feat ',      ' ', result, flags=re.IGNORECASE)
-    result= re.sub(', ',           ' ', result, flags=re.IGNORECASE)
+    result = re.sub(', ',           ' ', result, flags=re.IGNORECASE)
     return result
 
 
