@@ -8,6 +8,7 @@ import re
 import time
 import numpy as np
 
+#TODO possibly remove WIKIPEDIA_URL
 WIKIPEDIA_URL = 'http://en.wikipedia.org/'
 WIKIPEDIA_API_URL = WIKIPEDIA_URL + 'w/api.php/'
 BILLBOARD_URL = 'https://www.billboard.com/charts/hot-100/'
@@ -22,8 +23,9 @@ SEARCH_PARAMS_TEMPLATE = {
 PARSE_PARAMS_TEMPLATE = {
     'action': 'parse',
     'pageid': 'blankid',
-    'prop': 'sections',
-    'format': 'json'
+    'prop': 'wikitext',
+    'format': 'json',
+    'section': 0
 }
 
 def list_from_date(date=''):
@@ -42,8 +44,7 @@ def list_from_date(date=''):
 
     # First Song/Artist - needed because Billboard puts their first song/artist in a div class
     # "chart-number-one__title"  and "chart-number-one__artist
-    # Sometimes the artist is wrapped in an <a> tag and sometimes not. 
-    # We check for this.
+    # Sometimes the artist is wrapped in an <a> tag and sometimes not. We check for this.
     
     first_song = soup.find('div', {'class': 'chart-number-one__title'}).string.strip()
     first_artist = soup.find('div', {'class': 'chart-number-one__artist'}).find('a', text=True)
@@ -85,10 +86,9 @@ def list_from_date(date=''):
 
         wiki_parse_request = requests.get(WIKIPEDIA_API_URL, parse_params)
 
-        print(wiki_parse_request.text)
-
         parsed_json = json.loads(wiki_parse_request.text)
         
+        print(json.dumps(parsed_json, indent=4, sort_keys=True))
 
     print("Years:")
     print(years)
@@ -109,6 +109,18 @@ def get_config():
         config = json.load(f)
         return config
 
+
+
+def get_genres(wikitext):
+    """
+    Parses wikitext for genres
+    :return: array of genres
+    """
+    #TODO complete this regex
+    genre_regex = re.compile("genre\s*=\s*(?:<!--.+?-->\\n\*\s*)?")
+    match = genre_regex.search(wikitext)
+    print(match)
+    return match.group(0)
 
 def replace_feat(artist_song_string):
     """
