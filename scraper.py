@@ -117,7 +117,7 @@ def get_genres(wikitext):
     :return: array of genres
     """
     #TODO complete this regex
-    genre_regex = re.compile("genre\s*=\s*(?:<!--.+?-->\\n\*\s*)?")
+    genre_regex = re.compile(r"genre\s*=\s*(?:<!--.+?-->\\n\*\s*)?")
     match = genre_regex.search(wikitext)
     print(match)
     return match.group(0)
